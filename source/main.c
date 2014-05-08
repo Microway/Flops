@@ -1,8 +1,9 @@
 /* main.c
  * 
  * Author           : Alexander J. Yee
+ * Modified by      : Microway, Inc.
  * Date Created     : 01/25/2012
- * Last Modified    : 01/25/2012
+ * Last Modified    : 05/07/2014
  * 
  * 
  * 
@@ -26,6 +27,8 @@
  *  damage that may unintentionally be caused through its use.
  */
 
+#include <stdio.h>
+#include <string.h>
 
 #include "flops.h"
 
@@ -50,34 +53,82 @@
 #include "tools.h"
 #include "cpuid.h"
 
-void run_flops(int threads,size_t iterations){
+void run_flops(int threads, size_t iterations, int indefinite, int max_load){
+    do {
+
+        // If max load, skip down to the multiply+add function - the functions
+        // which just run multiply or add don't stress the CPU as much.
+        if( ! max_load ) {
 #ifdef x86_SSE2
-    test_dp_add_SSE2(threads,iterations);
-    test_dp_mul_SSE2(threads,iterations);
-    test_dp_mac_SSE2(threads,iterations);
+            test_dp_add_SSE2(threads,iterations);
+            test_dp_mul_SSE2(threads,iterations);
 #endif
 #ifdef x86_AVX
-    test_dp_add_AVX(threads,iterations);
-    test_dp_mul_AVX(threads,iterations);
-    test_dp_mac_AVX(threads,iterations);
+            test_dp_add_AVX(threads,iterations);
+            test_dp_mul_AVX(threads,iterations);
 #endif
 #ifdef x86_FMA4
-    test_dp_add_AVX(threads,iterations);
-    test_dp_mul_AVX(threads,iterations);
-    test_dp_mac_AVX(threads,iterations);
-    test_dp_fma_FMA4(threads,iterations);
+            test_dp_add_AVX(threads,iterations);
+            test_dp_mul_AVX(threads,iterations);
+            test_dp_mac_AVX(threads,iterations);
 #endif
 #ifdef x86_FMA3
-    test_dp_add_AVX(threads,iterations);
-    test_dp_mul_AVX(threads,iterations);
-    test_dp_mac_AVX(threads,iterations);
-    test_dp_fma_FMA3(threads,iterations);
+            test_dp_add_AVX(threads,iterations);
+            test_dp_mul_AVX(threads,iterations);
+            test_dp_mac_AVX(threads,iterations);
 #endif
+        }
+
+#ifdef x86_SSE2
+            test_dp_mac_SSE2(threads,iterations);
+#endif
+#ifdef x86_AVX
+            test_dp_mac_AVX(threads,iterations);
+#endif
+#ifdef x86_FMA4
+            test_dp_fma_FMA4(threads,iterations);
+#endif
+#ifdef x86_FMA3
+            test_dp_fma_FMA3(threads,iterations);
+#endif
+
+    } while( indefinite );
 }
 
-int main(){
+int main(int argc, char *argv[]) {
     int iterations = 1000000;
     int threads = omp_get_max_threads();
+
+    int indefinite = 0;
+    int max_load = 0;
+
+    int arg;
+    for( arg=1; arg < argc; arg++ ) {
+        // If indefinite mode has been requested, run until interrupted
+        if( strcmp(argv[arg], "--indefinite") == 0 ) {
+            iterations *= 10;
+            indefinite = 1;
+
+            printf("\nRunning indefinitely - will continue until interrupted...");
+        }
+        // If 'max' load has been requested, run only the most intense function
+        else if( strcmp(argv[arg], "--max-load") == 0 ) {
+            max_load = 1;
+
+            printf("\nRunning only the maximum load function...");
+        }
+        else {
+            printf("\nRun optimized, multi-threaded floating-point operations on CPU(s) and report results.\n");
+            printf("\nUsage: %s [options]\n", argv[0]);
+            printf("\nOptional arguments:");
+            printf("\n    --indefinite: run FLOPS tests until application is interrupted");
+            printf("\n    --max-load: run only the most FLOPS-intense function");
+            printf("\n\n");
+            printf("Invalid command line option: %s\n\n", argv[arg]);
+            exit(0);
+        }
+    }
+    printf("\n\n");
 
     printf(arch_name);
     printf("\n\n");
@@ -85,7 +136,7 @@ int main(){
     cpuid_print_name();
     cpuid_print_exts();
 
-    run_flops(threads,iterations);
+    run_flops(threads, iterations, indefinite, max_load);
 
 #ifdef WIN32
     int ret = system("pause");
