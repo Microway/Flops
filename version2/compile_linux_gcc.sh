@@ -1,4 +1,4 @@
-mkdir "binaries-linux" #
+mkdir -p "binaries-linux" #
 #
 basepath="binaries-linux/x64-" #
 flags="-std=c++0x -static -fopenmp -O2" #
