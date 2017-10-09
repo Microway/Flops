@@ -26,15 +26,11 @@
 #include "../macros/macro_mul.h"
 #include "../macros/macro_mac.h"
 #include "../macros/macro_fma.h"
-namespace flops{
+#include "f32v4_Reduce_AVX512.h"
+namespace Flops{
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-//  Reduction
-float reduce_f32v4_AVX512(__m512 x){
-    return _mm512_reduce_add_ps(x);
-}
 ////////////////////////////////////////////////////////////////////////////////
 //  Add
 class bench_add_f32v4_AVX512_chains4 : public benchmark{
@@ -42,7 +38,7 @@ class bench_add_f32v4_AVX512_chains4 : public benchmark{
         cout << "Single-Precision - 512-bit AVX512 - Add/Sub:" << endl;
         cout << "    Dependency Chains  = 4" << endl;
     }
-    virtual largeint_t run_loop(largeint_t iterations,double &result) const{
+    virtual largeint_t run_loop(largeint_t iterations, double &result) const{
         const __m512 add0 = _mm512_set1_ps((float)TEST_ADD_ADD);
         const __m512 sub0 = _mm512_set1_ps((float)TEST_ADD_SUB);
 
@@ -52,16 +48,16 @@ class bench_add_f32v4_AVX512_chains4 : public benchmark{
         __m512 r3 = _mm512_set1_ps(1.3f);
         for (size_t i = 0; i < iterations; i++){
             flops_add_chains4_unroll2_ops16(
-                _mm512_add_ps,_mm512_sub_ps,
-                add0,sub0,
-                r0,r1,r2,r3
+                _mm512_add_ps, _mm512_sub_ps,
+                add0, sub0,
+                r0, r1, r2, r3
             );
         }
         flops_reduce_chains4(
-            _mm512_512_ps,
-            r0,r1,r2,r3
+            _mm512_add_ps,
+            r0, r1, r2, r3
         );
-        result = reduce_f32v4_AVX512(r0);
+        result = reduce(r0);
 
         //  (16 ops / vector) * (16 ops / macro)
         return iterations * 16 * 16;
@@ -72,7 +68,7 @@ class bench_add_f32v4_AVX512_chains8 : public benchmark{
         cout << "Single-Precision - 512-bit AVX512 - Add/Sub:" << endl;
         cout << "    Dependency Chains  = 8" << endl;
     }
-    virtual largeint_t run_loop(largeint_t iterations,double &result) const{
+    virtual largeint_t run_loop(largeint_t iterations, double &result) const{
         const __m512 add0 = _mm512_set1_ps((float)TEST_ADD_ADD);
         const __m512 sub0 = _mm512_set1_ps((float)TEST_ADD_SUB);
 
@@ -86,16 +82,16 @@ class bench_add_f32v4_AVX512_chains8 : public benchmark{
         __m512 r7 = _mm512_set1_ps(1.7f);
         for (size_t i = 0; i < iterations; i++){
             flops_add_chains8_unroll2_ops32(
-                _mm512_add_ps,_mm512_sub_ps,
-                add0,sub0,
-                r0,r1,r2,r3,r4,r5,r6,r7
+                _mm512_add_ps, _mm512_sub_ps,
+                add0, sub0,
+                r0, r1, r2, r3, r4, r5, r6, r7
             );
         }
         flops_reduce_chains8(
             _mm512_add_ps,
-            r0,r1,r2,r3,r4,r5,r6,r7
+            r0, r1, r2, r3, r4, r5, r6, r7
         );
-        result = reduce_f32v4_AVX512(r0);
+        result = reduce(r0);
 
         //  (16 ops / vector) * (32 ops / macro)
         return iterations * 16 * 32;
@@ -108,7 +104,7 @@ class bench_mul_f32v4_AVX512_chains8 : public benchmark{
         cout << "Single-Precision - 512-bit AVX512 - Multiply:" << endl;
         cout << "    Dependency Chains = 8" << endl;
     }
-    virtual largeint_t run_loop(largeint_t iterations,double &result) const{
+    virtual largeint_t run_loop(largeint_t iterations, double &result) const{
         const __m512 mul0 = _mm512_set1_ps((float)TEST_MUL_MUL);
         const __m512 mul1 = _mm512_set1_ps((float)TEST_MUL_DIV);
 
@@ -123,15 +119,15 @@ class bench_mul_f32v4_AVX512_chains8 : public benchmark{
         for (size_t i = 0; i < iterations; i++){
             flops_mul_chains8_unroll2_ops32(
                 _mm512_mul_ps,
-                mul0,mul1,
-                r0,r1,r2,r3,r4,r5,r6,r7
+                mul0, mul1,
+                r0, r1, r2, r3, r4, r5, r6, r7
             );
         }
         flops_reduce_chains8(
             _mm512_add_ps,
-            r0,r1,r2,r3,r4,r5,r6,r7
+            r0, r1, r2, r3, r4, r5, r6, r7
         );
-        result = reduce_f32v4_AVX512(r0);
+        result = reduce(r0);
 
         //  (16 ops / vector) * (32 ops / macro)
         return iterations * 16 * 32;
@@ -142,7 +138,7 @@ class bench_mul_f32v4_AVX512_chains12 : public benchmark{
         cout << "Single-Precision - 512-bit AVX512 - Multiply:" << endl;
         cout << "    Dependency Chains = 12" << endl;
     }
-    virtual largeint_t run_loop(largeint_t iterations,double &result) const{
+    virtual largeint_t run_loop(largeint_t iterations, double &result) const{
         const __m512 mul0 = _mm512_set1_ps((float)TEST_MUL_MUL);
         const __m512 mul1 = _mm512_set1_ps((float)TEST_MUL_DIV);
 
@@ -161,15 +157,15 @@ class bench_mul_f32v4_AVX512_chains12 : public benchmark{
         for (size_t i = 0; i < iterations; i++){
             flops_mul_chains12_unroll2_ops48(
                 _mm512_mul_ps,
-                mul0,mul1,
-                r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB
+                mul0, mul1,
+                r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, rA, rB
             );
         }
         flops_reduce_chains12(
             _mm512_add_ps,
-            r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB
+            r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, rA, rB
         );
-        result = reduce_f32v4_AVX512(r0);
+        result = reduce(r0);
 
         //  (16 ops / vector) * (48 ops / macro)
         return iterations * 16 * 48;
@@ -182,7 +178,7 @@ class bench_mac_f32v4_AVX512_chains12 : public benchmark{
         cout << "Single-Precision - 512-bit AVX512 - Multiply + Add:" << endl;
         cout << "    Dependency Chains = 12" << endl;
     }
-    virtual largeint_t run_loop(largeint_t iterations,double &result) const{
+    virtual largeint_t run_loop(largeint_t iterations, double &result) const{
         const __m512 add0 = _mm512_set1_ps((float)TEST_ADD_ADD);
         const __m512 sub0 = _mm512_set1_ps((float)TEST_ADD_SUB);
         const __m512 mul0 = _mm512_set1_ps((float)TEST_MUL_MUL);
@@ -202,16 +198,16 @@ class bench_mac_f32v4_AVX512_chains12 : public benchmark{
         __m512 rB = _mm512_set1_ps(2.1f);
         for (size_t i = 0; i < iterations; i++){
             flops_muladd_chains12_unroll2_ops48(
-                _mm512_add_ps,_mm512_sub_ps,_mm512_mul_ps,
-                add0,sub0,mul0,mul1,
-                r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB
+                _mm512_add_ps, _mm512_sub_ps, _mm512_mul_ps,
+                add0, sub0, mul0, mul1,
+                r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, rA, rB
             );
         }
         flops_reduce_chains12(
             _mm512_add_ps,
-            r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB
+            r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, rA, rB
         );
-        result = reduce_f32v4_AVX512(r0);
+        result = reduce(r0);
 
         //  (16 ops / vector) * (48 ops / macro)
         return iterations * 16 * 48;
@@ -224,7 +220,7 @@ class bench_fma_linear_f32v4_AVX512_chains12 : public benchmark{
         cout << "Single-Precision - 512-bit AVX512 - Fused Multiply Add:" << endl;
         cout << "    Dependency Chains = 12" << endl;
     }
-    virtual largeint_t run_loop(largeint_t iterations,double &result) const{
+    virtual largeint_t run_loop(largeint_t iterations, double &result) const{
         const __m512 mul0 = _mm512_set1_ps((float)TEST_FMA_LINEAR_MUL0);
         const __m512 mul1 = _mm512_set1_ps((float)TEST_FMA_LINEAR_MUL1);
 
@@ -242,16 +238,16 @@ class bench_fma_linear_f32v4_AVX512_chains12 : public benchmark{
         __m512 rB = _mm512_set1_ps(2.1f);
         for (size_t i = 0; i < iterations; i++){
             flops_fma_linear_chains12_unroll2_ops48(
-                _mm512_fmadd_ps,_mm512_fnmadd_ps,
-                mul0,mul1,
-                r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB
+                _mm512_fmadd_ps, _mm512_fnmadd_ps,
+                mul0, mul1,
+                r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, rA, rB
             );
         }
         flops_reduce_chains12(
             _mm512_add_ps,
-            r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB
+            r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, rA, rB
         );
-        result = reduce_f32v4_AVX512(r0);
+        result = reduce(r0);
 
         //  (32 ops / vector) * (48 ops / macro)
         return iterations * 32 * 48;

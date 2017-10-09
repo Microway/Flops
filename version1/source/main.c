@@ -53,43 +53,28 @@
 #include "tools.h"
 #include "cpuid.h"
 
-void run_flops(int threads, size_t iterations, int indefinite, int max_load){
-    do {
-
-        // If max load, skip down to the multiply+add function - the functions
-        // which just run multiply or add don't stress the CPU as much.
-        if( ! max_load ) {
+void run_flops(int threads, size_t iterations){
 #ifdef x86_SSE2
-            test_dp_add_SSE2(threads,iterations);
-            test_dp_mul_SSE2(threads,iterations);
+    test_dp_add_SSE2(threads, iterations);
+    test_dp_mul_SSE2(threads, iterations);
+    test_dp_mac_SSE2(threads, iterations);
 #endif
 #ifdef x86_AVX
-            test_dp_add_AVX(threads,iterations);
-            test_dp_mul_AVX(threads,iterations);
+    test_dp_add_AVX(threads, iterations);
+    test_dp_mul_AVX(threads, iterations);
+    test_dp_mac_AVX(threads, iterations);
 #endif
 #ifdef x86_FMA4
-            test_dp_add_AVX(threads,iterations);
-            test_dp_mul_AVX(threads,iterations);
-            test_dp_mac_AVX(threads,iterations);
+    test_dp_add_AVX(threads, iterations);
+    test_dp_mul_AVX(threads, iterations);
+    test_dp_mac_AVX(threads, iterations);
+    test_dp_fma_FMA4(threads, iterations);
 #endif
 #ifdef x86_FMA3
-            test_dp_add_AVX(threads,iterations);
-            test_dp_mul_AVX(threads,iterations);
-            test_dp_mac_AVX(threads,iterations);
-#endif
-        }
-
-#ifdef x86_SSE2
-            test_dp_mac_SSE2(threads,iterations);
-#endif
-#ifdef x86_AVX
-            test_dp_mac_AVX(threads,iterations);
-#endif
-#ifdef x86_FMA4
-            test_dp_fma_FMA4(threads,iterations);
-#endif
-#ifdef x86_FMA3
-            test_dp_fma_FMA3(threads,iterations);
+    test_dp_add_AVX(threads, iterations);
+    test_dp_mul_AVX(threads, iterations);
+    test_dp_mac_AVX(threads, iterations);
+    test_dp_fma_FMA3(threads, iterations);
 #endif
 
     } while( indefinite );
@@ -136,7 +121,7 @@ int main(int argc, char *argv[]) {
     cpuid_print_name();
     cpuid_print_exts();
 
-    run_flops(threads, iterations, indefinite, max_load);
+    run_flops(threads, iterations);
 
 #ifdef WIN32
     int ret = system("pause");
